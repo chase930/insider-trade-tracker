@@ -1,36 +1,51 @@
 import os
-from sec_api import QueryApi
-import pandas as pd
+from sec_api import QueryApi  # type: ignore
+import pandas as pd  # type: ignore
 from dotenv import load_dotenv
+import json
 
-load_dotenv()  # Load environment variables from .env
+load_dotenv()
 
 queryApi = QueryApi(api_key=os.getenv("SEC_API_KEY"))
 
 query = {
-    "query": { "query_string": { "query": "formType:\"4\"" } },
+    "query": {"query_string": {"query": "formType:\"4\""}},
     "from": "0",
-    "size": "10",
-    "sort": [{ "filedAt": { "order": "desc" } }]
+    "size": "20",
+    "sort": [{"filedAt": {"order": "desc"}}]
 }
 
 filings = queryApi.get_filings(query)
 
-df = pd.json_normalize(filings['filings'])
+print(json.dumps(filings['filings'][0], indent=4))
 
-print("Available columns:", df.columns)
-print(df.head())
+def get_reporting_owner_data(filing):
+    company_name = None
+    insider_name = None
 
-if all(col in df.columns for col in ['companyName', 'formType', 'filedAt']):
-    print("\nRelevant filing data:")
-    print(df[['companyName', 'formType', 'filedAt']])
-else:
-    print("Expected columns not found in DataFrame.")
+    for entity in filing['entities']:
+        if '(Issuer)' in entity['companyName']:
+            company_name = entity['companyName'].replace(' (Issuer)', '').strip()
+        if '(Reporting)' in entity['companyName']:
+            insider_name = entity['companyName'].replace(' (Reporting)', '').strip()
+
+    return {
+        'companyName': company_name,
+        'insider_reportingOwnerName': insider_name,
+        'filedAt': filing['filedAt']
+    }
+
+data = [get_reporting_owner_data(filing) for filing in filings['filings']]
+
+df = pd.DataFrame(data)
+
+print("\nRelevant filing data:")
+print(df)
 
 entities_df = pd.json_normalize(
-    filings['filings'], 
-    'entities', 
-    ['companyName', 'formType', 'filedAt'], 
+    filings['filings'],
+    'entities',
+    ['companyName', 'formType', 'filedAt'],
     record_prefix='entity_',
     meta_prefix='parent_'
 )
