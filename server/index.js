@@ -16,5 +16,19 @@ app.get('/', async (req, res) => {
     }
 });
 
+app.get('/fetch-insider-trades', (req, res) => {
+    exec('python3 fetch_sec_data.py', (error, stdout, stderr) => {
+        if (error) {
+            console.error(`Error: ${error.message}`);
+            return res.status(500).send('Error fetching data');
+        }
+        if (stderr) {
+            console.error(`stderr: ${stderr}`);
+            return res.status(500).send('Error fetching data');
+        }
+        res.send(stdout);
+    });
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
