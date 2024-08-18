@@ -3,6 +3,8 @@ from sec_api import InsiderTradingApi #type: ignore
 import pandas as pd  # type: ignore
 from dotenv import load_dotenv
 import json
+from pydash import get, flatten #type: ignore
+from flatten import flatten_filings, flatten_filing
 
 load_dotenv()
 
@@ -18,5 +20,14 @@ insider_trades_sample = insiderTradingApi.get_data({
   "sort": [{ "filedAt": { "order": "desc" } }]
 })
 
+
 print(json.dumps(insider_trades_sample, indent=4))
+
+transactions = flatten_filings(insider_trades_sample["transactions"])
+trades = pd.DataFrame(transactions)
+trades.head(5)
+
+pd.set_option('display.max_columns', None)
+
+print(trades.head(5))
 
