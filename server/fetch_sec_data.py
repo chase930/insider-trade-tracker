@@ -4,30 +4,43 @@ import pandas as pd  # type: ignore
 from dotenv import load_dotenv
 import json
 from pydash import get, flatten #type: ignore
-from flatten import flatten_filings, flatten_filing
+from flatten import flatten_filings
 
 load_dotenv()
 
 insiderTradingApi = InsiderTradingApi(api_key=os.getenv("SEC_API_KEY"))
 
+stock_list = ["TSLA", "AAPL", "AMZN", "NVDA", "META"]
 
-query_string = "issuer.tradingSymbol:TSLA"
+def fetch_insider_trades(stock_name):
+    insider_trades_sample = insiderTradingApi.get_data({
+      "query": {"query_string": {"query": f"issuer.tradingSymbol:{stock_name}"}},
+      "from": "0",
+      "size": "2",
+      "sort": [{ "filedAt": { "order": "desc" } }]
+    })
 
-insider_trades_sample = insiderTradingApi.get_data({
-  "query": {"query_string": {"query": query_string}},
-  "from": "0",
-  "size": "2",
-  "sort": [{ "filedAt": { "order": "desc" } }]
-})
+    transactions = flatten_filings(insider_trades_sample["transactions"])
+    trades = pd.DataFrame(transactions)
+    
+    return trades
 
 
-print(json.dumps(insider_trades_sample, indent=4))
+def fetch_multiple_stocks(stock_list):
+    all_trades = {}
+    for stock in stock_list:
+        trades = fetch_insider_trades(stock)
+        all_trades[stock] = trades
+        #Purely for test purposes: will remove later
+        print(f"Testing in script: Insider trades for {stock}:")
+        print(trades.head(5))
+        print("--------------------------------------------------")
+    
+    return all_trades
 
-transactions = flatten_filings(insider_trades_sample["transactions"])
-trades = pd.DataFrame(transactions)
-trades.head(5)
+if __name__ == "__main__":
+    trades_data = fetch_multiple_stocks(stock_list)
 
-pd.set_option('display.max_columns', None)
-
-print(trades.head(5))
+    for stock, trades in trades_data.items():
+        trades.to_csv(f'{stock}_insider_trades.csv', index=False)
 
