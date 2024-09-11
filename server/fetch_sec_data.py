@@ -2,7 +2,7 @@ import os
 from sec_api import InsiderTradingApi #type: ignore
 import pandas as pd  # type: ignore
 from dotenv import load_dotenv
-import json
+import psycopg2 #type: ignore
 from pydash import get, flatten #type: ignore
 from flatten import flatten_filings
 
@@ -11,6 +11,10 @@ load_dotenv()
 insiderTradingApi = InsiderTradingApi(api_key=os.getenv("SEC_API_KEY"))
 
 stock_list = ["TSLA", "AAPL", "AMZN", "NVDA", "META"]
+
+db_insert = psycopg2.connect("dbname=server user=postgres")
+
+cursor = db_insert.cursor()
 
 def fetch_insider_trades(stock_name):
     insider_trades_sample = insiderTradingApi.get_data({
