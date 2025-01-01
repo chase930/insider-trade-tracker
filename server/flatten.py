@@ -34,7 +34,8 @@ def flatten_filing(filing):
           "shares": shares,
           "sharePrice": sharePrice,
           "total": math.ceil(shares * sharePrice),
-          "sharesOwnedFollowingTransaction": sharesOwnedFollowingTransaction
+          "sharesOwnedFollowingTransaction": sharesOwnedFollowingTransaction,
+          "transactionDate": transaction["transactionDate"]
       }
 
       transactions.append({**base_data, **entry})
@@ -52,7 +53,8 @@ def flatten_filing(filing):
           "shares": transaction["amounts"]["shares"],
           "sharePrice": sharePrice,
           "total": math.ceil(transaction["amounts"]["shares"] * sharePrice),
-          "sharesOwnedFollowingTransaction": sharesOwnedFollowingTransaction
+          "sharesOwnedFollowingTransaction": sharesOwnedFollowingTransaction,
+          "transactionDate": transaction["transactionDate"]
       }
 
       # merge base_data and entry into a new dict and append to transactions
